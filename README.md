@@ -104,12 +104,6 @@ Select an option (Use ↑↓ arrows, Enter to select):
   ❌ Exit
 ```
 
-**How to use:**
-1. Use **↑** and **↓** arrow keys to navigate
-2. Press **Enter** to select an option
-3. Enter parameters when prompted (defaults are shown in brackets)
-4. The bot will execute your selected feature
-
 ### Menu Options Explained
 
 #### 📊 **Single Scan (All Opportunities)**
@@ -327,32 +321,6 @@ The bot automatically calculates minimum profitable opportunities based on actua
 
 ---
 
-## 🔧 Technical Details
-
-### Error Handling
-
-The bot includes comprehensive error handling:
-- **API Errors**: Graceful handling of rate limits, network errors, and API failures
-- **Data Validation**: Checks for missing or invalid market data before processing
-- **Trade Execution**: Validates opportunities before execution to prevent losses
-- **Rate Limiting**: Automatic rate limit detection and intelligent backoff strategies
-
-### Performance Optimization
-
-- **Efficient Scanning**: Filters markets by liquidity before detailed analysis
-- **Rate Limiting**: Built-in delays to respect API constraints
-- **Batch Processing**: Processes multiple markets efficiently
-- **Memory Management**: Streams data rather than loading everything into memory
-
-### Security
-
-- **Credential Management**: Uses environment variables, never hardcoded
-- **API Key Protection**: `.env` file is gitignored by default
-- **Safe Defaults**: Auto-execution disabled by default
-- **Input Validation**: Validates all inputs before API calls
-
----
-
 ## 🧪 Testing & Validation
 
 Before using with real money:
@@ -385,12 +353,6 @@ The authors and contributors are not responsible for any financial losses incurr
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 👤 Author
 
 **vladmeer**
@@ -404,36 +366,3 @@ Built with Python 3.8+, demonstrating production-ready software engineering prac
 - **GitHub**: [@vladmeer](https://github.com/vladmeer)
 
 ---
-
-## 🌟 Project Highlights
-
-This project showcases professional software engineering skills:
-
-### Technical Excellence
-- **Clean Architecture**: Modular design with single-responsibility principles
-- **Type Safety**: Comprehensive type hints throughout
-- **Error Resilience**: Graceful handling of failures and edge cases
-- **Financial Accuracy**: Precise fee calculations and profit modeling
-- **Production Ready**: Environment-based configuration, safe defaults, comprehensive documentation
-
-### Real-World Application
-- Identifies market inefficiencies in prediction markets
-- Calculates realistic profit estimates after fees
-- Provides actionable trading recommendations
-- Supports automated execution with safety controls
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
----
-
-## 📞 Support
-
-For issues, questions, or contributions, please open an issue on the [GitHub repository](https://github.com/vladmeer/kalshi-arbitrage-bot) or contact the author directly via Telegram or X.
-
----
-
-**Happy Trading! 📈**
