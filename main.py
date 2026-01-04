@@ -19,7 +19,9 @@ Author: vladmeer
 License: MIT
 Repository: https://github.com/vladmeer/kalshi-arbitrage-bot
 """
+import importlib.util
 import os
+import subprocess
 import time
 from typing import List, Dict
 from datetime import datetime
@@ -461,6 +463,7 @@ def show_interactive_menu():
             "🎯 Scan Probability Arbitrage Opportunities Only",
             "🔄 Continuous Monitoring Mode",
             "⚙️  Configure Settings",
+            "🌐 Launch Web Dashboard",
             "❌ Exit"
         ]
         
@@ -482,7 +485,7 @@ def show_interactive_menu():
         if not answers:
             print("\nOperation cancelled.")
             return
-        
+
         action = answers['action']
     except (ImportError, Exception):
         # Fallback to simple menu if inquirer not available or fails
@@ -503,6 +506,8 @@ def show_interactive_menu():
         handle_continuous_monitoring(bot)
     elif action == "⚙️  Configure Settings":
         handle_configure_settings(bot)
+    elif action == "🌐 Launch Web Dashboard":
+        handle_launch_web_dashboard()
     elif action == "❌ Exit":
         print("\nGoodbye! 👋")
         return
@@ -520,20 +525,21 @@ def show_simple_menu():
         "Scan Probability Arbitrage Opportunities Only",
         "Continuous Monitoring Mode",
         "Configure Settings",
+        "Launch Web Dashboard",
         "Exit"
     ]
-    
+
     print("Available options:")
     for i, option in enumerate(menu_options, 1):
         print(f"  {i}. {option}")
     
     try:
-        choice = input("\nEnter your choice (1-6): ").strip()
+        choice = input("\nEnter your choice (1-7): ").strip()
         choice_num = int(choice)
-        
-        if 1 <= choice_num <= 6:
+
+        if 1 <= choice_num <= 7:
             bot = KalshiArbitrageBot(auto_execute_trades=False)
-            
+
             if choice_num == 1:
                 handle_single_scan(bot)
             elif choice_num == 2:
@@ -545,9 +551,11 @@ def show_simple_menu():
             elif choice_num == 5:
                 handle_configure_settings(bot)
             elif choice_num == 6:
+                handle_launch_web_dashboard()
+            elif choice_num == 7:
                 print("\nGoodbye! 👋")
         else:
-            print("Invalid choice. Please select 1-6.")
+            print("Invalid choice. Please select 1-7.")
     except (ValueError, KeyboardInterrupt):
         print("\nOperation cancelled.")
 
@@ -717,6 +725,45 @@ def handle_configure_settings(bot):
     print("\nPress Enter to return to main menu...")
     input()
     show_interactive_menu()
+
+
+def handle_launch_web_dashboard():
+    """Start the FastAPI-powered web dashboard from the menu."""
+    uvicorn_spec = importlib.util.find_spec("uvicorn")
+    fastapi_spec = importlib.util.find_spec("fastapi")
+
+    if uvicorn_spec is None or fastapi_spec is None:
+        print("\n⚠️  Missing dependencies: FastAPI and/or Uvicorn are not installed.")
+        print("Install them with: pip install -r requirements.txt")
+        return
+
+    print("\n" + "="*70)
+    print("  Web Dashboard Launcher")
+    print("="*70 + "\n")
+
+    default_port = os.getenv("WEB_UI_PORT", "8000")
+    port_input = get_user_input(
+        "Port to bind the dashboard on", default_port, lambda x: x.isdigit() and 0 < int(x) < 65536
+    )
+
+    command = [
+        "uvicorn",
+        "src.web_ui:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(port_input),
+    ]
+
+    print("\nLaunching web dashboard...")
+    try:
+        subprocess.Popen(command)
+        print(f"\n✅ Dashboard started on http://127.0.0.1:{port_input} (or your machine's IP)")
+        print("Leave this terminal running to keep the dashboard alive. Press Ctrl+C to stop.")
+    except FileNotFoundError:
+        print("\n❌ Unable to start uvicorn. Is it installed and on your PATH?")
+    except Exception as exc:  # pylint: disable=broad-except
+        print(f"\n❌ Failed to launch dashboard: {exc}")
 
 
 def main():

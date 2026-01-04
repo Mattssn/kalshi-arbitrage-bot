@@ -276,3 +276,55 @@ class KalshiClient:
             print(f"Error placing order: {e}")
             return None
 
+    def get_wallet_summary(self) -> Dict:
+        """Retrieve wallet balances and portfolio metrics.
+
+        Returns a dictionary with cash balances and open exposure when the API
+        is reachable. If the API call fails, a descriptive error is returned
+        instead so the UI can surface the issue without crashing.
+        """
+        try:
+            response = self._make_request("GET", "/portfolio/wallet")
+            wallet = response.get("wallet", {})
+            return {
+                "available_cash": wallet.get("available_cash"),
+                "reserved_cash": wallet.get("reserved_cash"),
+                "total_equity": wallet.get("total_equity"),
+                "raw": wallet
+            }
+        except Exception as exc:
+            return {
+                "error": f"Unable to fetch wallet summary: {exc}",
+                "raw": None
+            }
+
+    def get_recent_orders(self, limit: int = 25) -> List[Dict]:
+        """Return the most recent orders for the authenticated account."""
+        try:
+            response = self._make_request(
+                "GET",
+                "/orders",
+                params={"limit": limit}
+            )
+            return response.get("orders", [])
+        except Exception as exc:
+            print(f"Error fetching recent orders: {exc}")
+            return []
+
+    def check_connection(self) -> Dict:
+        """Perform a lightweight connectivity check against the API."""
+        try:
+            # Prefer a dedicated health endpoint if available, otherwise pull a tiny
+            # slice of market data to validate credentials.
+            health = self._make_request("GET", "/ping")
+            return {"connected": True, "details": health}
+        except Exception:
+            try:
+                markets = self.get_markets(limit=1, status="open")
+                return {
+                    "connected": True,
+                    "details": {"markets_checked": len(markets)}
+                }
+            except Exception as exc:  # pragma: no cover - defensive fallback
+                return {"connected": False, "details": str(exc)}
+

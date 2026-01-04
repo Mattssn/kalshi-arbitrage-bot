@@ -82,6 +82,21 @@ The Kalshi Arbitrage Trading Bot is a professional-grade Python application that
    python main.py
    ```
 
+### Run the Web UI
+
+Launch a browser dashboard that surfaces API connectivity, wallet stats, recent
+orders, and lets you trigger scans without the terminal:
+
+```bash
+uvicorn src.web_ui:app --reload --host 0.0.0.0 --port 8000
+```
+
+Then open <http://localhost:8000> in your browser.
+
+Prefer to launch it from the interactive shell? Choose **“Launch Web Dashboard”**
+from the menu (appears when you run `python main.py`) and pick a port when
+prompted.
+
 ---
 
 ## 📖 Usage Guide
@@ -95,14 +110,15 @@ Simply run `python main.py` without any arguments to launch the interactive menu
   KALSHI ARBITRAGE TRADING BOT - Interactive Menu
 ======================================================================
 
-Select an option (Use ↑↓ arrows, Enter to select):
-→ 📊 Single Scan (All Opportunities)
-  📈 Scan Spread Trading Opportunities Only
-  🎯 Scan Probability Arbitrage Opportunities Only
-  🔄 Continuous Monitoring Mode
-  ⚙️  Configure Settings
-  ❌ Exit
-```
+ Select an option (Use ↑↓ arrows, Enter to select):
+ → 📊 Single Scan (All Opportunities)
+   📈 Scan Spread Trading Opportunities Only
+   🎯 Scan Probability Arbitrage Opportunities Only
+   🔄 Continuous Monitoring Mode
+   ⚙️  Configure Settings
+   🌐 Launch Web Dashboard
+   ❌ Exit
+ ```
 
 ### Menu Options Explained
 
