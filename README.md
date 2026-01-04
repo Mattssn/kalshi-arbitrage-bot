@@ -82,6 +82,17 @@ The Kalshi Arbitrage Trading Bot is a professional-grade Python application that
    python main.py
    ```
 
+### Run the Web UI
+
+Launch a browser dashboard that surfaces API connectivity, wallet stats, recent
+orders, and lets you trigger scans without the terminal:
+
+```bash
+uvicorn src.web_ui:app --reload --host 0.0.0.0 --port 8000
+```
+
+Then open <http://localhost:8000> in your browser.
+
 ---
 
 ## 📖 Usage Guide
