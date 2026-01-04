@@ -99,20 +99,19 @@ class ArbitrageAnalyzer:
             if days_to_expiration <= 0:
                 return None
             
-            # Handle binary markets (yes/no) - most common on Kalshi
-            market_type = market_data.get("market_type", "")
-            
-            # Get prices for binary markets
+            # Get prices for binary markets (yes/no) - most common on Kalshi
+            # Note: We don't require market_type field as it may not be present in API response
             yes_bid = market_data.get("yes_bid")
             yes_ask = market_data.get("yes_ask")
             no_bid = market_data.get("no_bid")
             no_ask = market_data.get("no_ask")
-            
+
             total_prob = 0.0
             contract_prices = []
-            
-            # For binary markets, check if yes + no prices sum to 100
-            if market_type == "binary" and (yes_bid is not None or yes_ask is not None):
+
+            # Check if this looks like a binary market by presence of yes/no prices
+            # (Rather than relying on market_type field which may not exist)
+            if yes_bid is not None or yes_ask is not None:
                 # Use bid prices for selling arbitrage (yes_bid + no_bid > 100)
                 # Use ask prices for buying arbitrage (yes_ask + no_ask < 100)
                 
