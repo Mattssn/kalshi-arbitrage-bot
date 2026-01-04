@@ -70,6 +70,15 @@ def home():
   </div>
 
   <div class='card'>
+    <h2>Market Search</h2>
+    <div class='flex'>
+      <label>Search markets <input type='text' id='search-query' placeholder='Enter market name or ticker...' style='width: 300px;'></label>
+      <button onclick='searchMarkets()'>Search</button>
+    </div>
+    <pre id='search-results'>Enter a search term to find markets...</pre>
+  </div>
+
+  <div class='card'>
     <h2>Control Panel</h2>
     <div class='flex'>
       <label>Markets to scan <input type='number' id='limit' value='50' min='1' max='500'></label>
@@ -136,6 +145,40 @@ def home():
       document.getElementById('scan-output').innerText = 'Settings updated: ' + JSON.stringify(data, null, 2);
     }
 
+    async function searchMarkets(){
+      const query = document.getElementById('search-query').value.trim();
+      if(!query){
+        document.getElementById('search-results').innerText = 'Please enter a search term.';
+        return;
+      }
+      document.getElementById('search-results').innerText = 'Searching...';
+      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if(data.error){
+        document.getElementById('search-results').innerText = `Error: ${data.error}`;
+      } else if(!data.markets || data.markets.length === 0){
+        document.getElementById('search-results').innerText = 'No markets found matching your search.';
+      } else {
+        const results = data.markets.map(m => {
+          const title = m.title || 'Unknown';
+          const ticker = m.ticker_name || m.ticker || 'N/A';
+          const yes_bid = m.yes_bid ?? 'N/A';
+          const yes_ask = m.yes_ask ?? 'N/A';
+          const no_bid = m.no_bid ?? 'N/A';
+          const no_ask = m.no_ask ?? 'N/A';
+          const liquidity = ((m.liquidity ?? 0) / 100).toFixed(2);
+          return `
+Ticker: ${ticker}
+Title: ${title}
+YES Bid: ${yes_bid}¢ | YES Ask: ${yes_ask}¢
+NO Bid: ${no_bid}¢ | NO Ask: ${no_ask}¢
+Liquidity: $${liquidity}
+${'─'.repeat(60)}`;
+        }).join('\n');
+        document.getElementById('search-results').innerText = `Found ${data.markets.length} market(s):\n\n${results}`;
+      }
+    }
+
     refreshStatus();
     refreshWallet();
     refreshOrders();
@@ -160,6 +203,10 @@ def api_orders(limit: int = 25):
 
 @app.get("/api/scan")
 def api_scan(limit: int = 50, auto_execute: bool = False):
+    # Get markets to add debug info
+    markets = client.get_markets(limit=limit, status="open")
+    filtered_markets = bot.filter_markets_by_liquidity(markets) if markets else []
+
     arbitrage_opps, trade_opps, executed_count = bot.scan_all_opportunities(
         limit=limit,
         auto_execute=auto_execute
@@ -167,7 +214,14 @@ def api_scan(limit: int = 50, auto_execute: bool = False):
     return {
         "arbitrage_opportunities": [opp.__dict__ for opp in arbitrage_opps],
         "trade_opportunities": [opp.__dict__ for opp in trade_opps],
-        "executed": executed_count
+        "executed": executed_count,
+        "debug": {
+            "total_markets_fetched": len(markets) if markets else 0,
+            "markets_after_liquidity_filter": len(filtered_markets),
+            "min_liquidity": bot.min_liquidity,
+            "min_profit_per_day": bot.min_profit_per_day,
+            "sample_market_fields": list(markets[0].keys()) if markets and len(markets) > 0 else []
+        }
     }
 
 
@@ -182,4 +236,59 @@ def api_settings(payload: SettingsPayload):
         "min_liquidity": bot.min_liquidity,
         "min_profit_per_day": bot.min_profit_per_day
     }
+
+
+@app.get("/api/search")
+def api_search(query: str, limit: int = 100):
+    """Search for markets by name or ticker."""
+    if not query or len(query.strip()) == 0:
+        return {"error": "Query parameter is required", "markets": []}
+
+    try:
+        # Get all open markets
+        all_markets = client.get_markets(limit=limit, status="open")
+
+        if not all_markets:
+            return {"markets": [], "count": 0}
+
+        # Filter markets by search query (case-insensitive)
+        query_lower = query.lower().strip()
+        matching_markets = []
+
+        for market in all_markets:
+            title = market.get("title", "").lower()
+            ticker = market.get("ticker_name", market.get("ticker", "")).lower()
+
+            # Match if query appears in title or ticker
+            if query_lower in title or query_lower in ticker:
+                matching_markets.append(market)
+
+        return {
+            "markets": matching_markets,
+            "count": len(matching_markets),
+            "query": query
+        }
+    except Exception as e:
+        return {"error": str(e), "markets": []}
+
+
+@app.get("/api/debug/markets")
+def api_debug_markets(limit: int = 10):
+    """Debug endpoint to see raw market data."""
+    try:
+        markets = client.get_markets(limit=limit, status="open")
+
+        # Filter by liquidity
+        filtered_markets = bot.filter_markets_by_liquidity(markets)
+
+        return {
+            "total_markets_fetched": len(markets),
+            "markets_after_liquidity_filter": len(filtered_markets),
+            "min_liquidity_threshold": bot.min_liquidity,
+            "min_profit_per_day": bot.min_profit_per_day,
+            "sample_markets": markets[:5] if markets else [],
+            "sample_filtered": filtered_markets[:5] if filtered_markets else []
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
